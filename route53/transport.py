@@ -170,7 +170,7 @@ class RequestsTransport(BaseTransport):
     .. _requests webpage: http://docs.python-requests.org/en/latest/
     """
 
-    def _send_get_request(self, path, params, headers):
+    def _send_get_request(self, path, params, headers, timeout):
         """
         Sends the GET request to the Route53 endpoint.
 
@@ -182,11 +182,11 @@ class RequestsTransport(BaseTransport):
         :returns: The body of the response.
         """
 
-        r = requests.get(self.endpoint + path, params=params, headers=headers)
+        r = requests.get(self.endpoint + path, params=params, headers=headers, timeout=timeout)
         r.raise_for_status()
         return r.text
 
-    def _send_post_request(self, path, data, headers):
+    def _send_post_request(self, path, data, headers, timeout):
         """
         Sends the POST request to the Route53 endpoint.
 
@@ -199,10 +199,10 @@ class RequestsTransport(BaseTransport):
         :returns: The body of the response.
         """
 
-        r = requests.post(self.endpoint + path, data=data, headers=headers)
+        r = requests.post(self.endpoint + path, data=data, headers=headers, timeout=timeout)
         return r.text
 
-    def _send_delete_request(self, path, headers):
+    def _send_delete_request(self, path, headers, timeout):
         """
         Sends the DELETE request to the Route53 endpoint.
 
@@ -213,5 +213,5 @@ class RequestsTransport(BaseTransport):
         :returns: The body of the response.
         """
 
-        r = requests.delete(self.endpoint + path, headers=headers)
+        r = requests.delete(self.endpoint + path, headers=headers, timeout=timeout)
         return r.text

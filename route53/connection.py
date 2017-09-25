@@ -30,8 +30,9 @@ class Route53Connection(object):
         self._aws_access_key_id = aws_access_key_id
         self._aws_secret_access_key = aws_secret_access_key
         self._transport = RequestsTransport(self)
+        self.timeout = 60
 
-    def _send_request(self, path, data, method):
+    def _send_request(self, path, data, method, timeout):
         """
         Uses the HTTP transport to query the Route53 API. Runs the response
         through lxml's parser, before we hand it off for further picking
@@ -45,13 +46,13 @@ class Route53Connection(object):
         :returns: An lxml Element root.
         """
 
-        response_body = self._transport.send_request(path, data, method)
+        response_body = self._transport.send_request(path, data, method, timeout)
         root = etree.fromstring(response_body)
         #print(prettyprint_xml(root))
         return root
 
     def _do_autopaginating_api_call(self, path, params, method, parser_func,
-        next_marker_xpath, next_marker_param_name,
+        next_marker_xpath, next_marker_param_name, timeout,
         next_type_xpath=None, parser_kwargs=None):
         """
         Given an API method, the arguments passed to it, and a function to
@@ -85,7 +86,7 @@ class Route53Connection(object):
         # results we're going to have to go through.
         while True:
             # An lxml Element node.
-            root = self._send_request(path, params, method)
+            root = self._send_request(path, params, method, timeout)
 
             # Individually yield HostedZone instances after parsing/instantiating.
             for record in parser_func(root, connection=self, **parser_kwargs):
@@ -110,7 +111,7 @@ class Route53Connection(object):
                 next_type = root.find(next_type_xpath)
                 params['type'] = next_type.text
 
-    def list_hosted_zones(self, page_chunks=100):
+    def list_hosted_zones(self, page_chunks=100, timeout=30):
         """
         List all hosted zones associated with this connection's account. Since
         this method returns a generator, you can pull as many or as few
@@ -136,9 +137,10 @@ class Route53Connection(object):
             parser_func=xml_parsers.list_hosted_zones_parser,
             next_marker_xpath="./{*}NextMarker",
             next_marker_param_name="marker",
+            timeout=timeout
         )
 
-    def create_hosted_zone(self, name, caller_reference=None, comment=None):
+    def create_hosted_zone(self, name, caller_reference=None, comment=None, timeout=30):
         """
         Creates and returns a new hosted zone. Once a hosted zone is created,
         its details can't be changed.
@@ -168,6 +170,7 @@ class Route53Connection(object):
             path='hostedzone',
             data=body,
             method='POST',
+            timeout=timeout,
         )
 
         return xml_parsers.created_hosted_zone_parser(
@@ -175,7 +178,7 @@ class Route53Connection(object):
             connection=self
         )
 
-    def get_hosted_zone_by_id(self, id):
+    def get_hosted_zone_by_id(self, id, timeout=30):
         """
         Retrieves a hosted zone, by hosted zone ID (not name).
 
@@ -189,6 +192,7 @@ class Route53Connection(object):
             path='hostedzone/%s' % id,
             data={},
             method='GET',
+            timeout=timeout,
         )
 
         return xml_parsers.get_hosted_zone_by_id_parser(
@@ -196,7 +200,7 @@ class Route53Connection(object):
             connection=self,
         )
 
-    def delete_hosted_zone_by_id(self, id):
+    def delete_hosted_zone_by_id(self, id, timeout=30):
         """
         Deletes a hosted zone, by hosted zone ID (not name).
 
@@ -220,6 +224,7 @@ class Route53Connection(object):
             path='hostedzone/%s' % id,
             data={},
             method='DELETE',
+            timeout=timeout,
         )
 
         return xml_parsers.delete_hosted_zone_by_id_parser(
@@ -229,7 +234,7 @@ class Route53Connection(object):
 
     def _list_resource_record_sets_by_zone_id(self, id, rrset_type=None,
                                              identifier=None, name=None,
-                                             page_chunks=100):
+                                             page_chunks=100, timeout=30):
         """
         Lists a hosted zone's resource record sets by Zone ID, if you
         already know it.
@@ -272,10 +277,11 @@ class Route53Connection(object):
             parser_kwargs={'zone_id': id},
             next_marker_xpath="./{*}NextRecordName",
             next_marker_param_name="name",
-            next_type_xpath="./{*}NextRecordType"
+            next_type_xpath="./{*}NextRecordType",
+            timeout=timeout
         )
 
-    def _change_resource_record_sets(self, change_set, comment=None):
+    def _change_resource_record_sets(self, change_set, comment=None, timeout=30):
         """
         Given a ChangeSet, POST it to the Route53 API.
 
@@ -301,6 +307,7 @@ class Route53Connection(object):
             path='hostedzone/%s/rrset' % change_set.hosted_zone_id,
             data=body,
             method='POST',
+            timeout=timeout,
         )
 
         #print(prettyprint_xml(root))
