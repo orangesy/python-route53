@@ -18,6 +18,7 @@ class Route53Connection(object):
 
     endpoint_version = '2012-02-29'
     """The date-based API version. Mostly visible for your reference."""
+    CONN_TIMEOUT = '30'
 
     def __init__(self, aws_access_key_id, aws_secret_access_key):
         """
@@ -30,7 +31,6 @@ class Route53Connection(object):
         self._aws_access_key_id = aws_access_key_id
         self._aws_secret_access_key = aws_secret_access_key
         self._transport = RequestsTransport(self)
-        self.timeout = 60
 
     def _send_request(self, path, data, method, timeout):
         """
@@ -111,7 +111,7 @@ class Route53Connection(object):
                 next_type = root.find(next_type_xpath)
                 params['type'] = next_type.text
 
-    def list_hosted_zones(self, page_chunks=100, timeout=30):
+    def list_hosted_zones(self, page_chunks=100, timeout=CONN_TIMEOUT):
         """
         List all hosted zones associated with this connection's account. Since
         this method returns a generator, you can pull as many or as few
@@ -140,7 +140,7 @@ class Route53Connection(object):
             timeout=timeout
         )
 
-    def create_hosted_zone(self, name, caller_reference=None, comment=None, timeout=30):
+    def create_hosted_zone(self, name, caller_reference=None, comment=None, timeout=CONN_TIMEOUT):
         """
         Creates and returns a new hosted zone. Once a hosted zone is created,
         its details can't be changed.
@@ -178,7 +178,7 @@ class Route53Connection(object):
             connection=self
         )
 
-    def get_hosted_zone_by_id(self, id, timeout=30):
+    def get_hosted_zone_by_id(self, id, timeout=CONN_TIMEOUT):
         """
         Retrieves a hosted zone, by hosted zone ID (not name).
 
@@ -200,7 +200,7 @@ class Route53Connection(object):
             connection=self,
         )
 
-    def delete_hosted_zone_by_id(self, id, timeout=30):
+    def delete_hosted_zone_by_id(self, id, timeout=CONN_TIMEOUT):
         """
         Deletes a hosted zone, by hosted zone ID (not name).
 
@@ -234,7 +234,7 @@ class Route53Connection(object):
 
     def _list_resource_record_sets_by_zone_id(self, id, rrset_type=None,
                                              identifier=None, name=None,
-                                             page_chunks=100, timeout=30):
+                                             page_chunks=100, timeout=CONN_TIMEOUT):
         """
         Lists a hosted zone's resource record sets by Zone ID, if you
         already know it.
@@ -281,7 +281,7 @@ class Route53Connection(object):
             timeout=timeout
         )
 
-    def _change_resource_record_sets(self, change_set, comment=None, timeout=30):
+    def _change_resource_record_sets(self, change_set, comment=None, timeout=CONN_TIMEOUT):
         """
         Given a ChangeSet, POST it to the Route53 API.
 
