@@ -18,7 +18,7 @@ class Route53Connection(object):
 
     endpoint_version = '2012-02-29'
     """The date-based API version. Mostly visible for your reference."""
-    CONN_TIMEOUT = '30'
+    CONN_TIMEOUT = 30.
 
     def __init__(self, aws_access_key_id, aws_secret_access_key):
         """
@@ -32,7 +32,7 @@ class Route53Connection(object):
         self._aws_secret_access_key = aws_secret_access_key
         self._transport = RequestsTransport(self)
 
-    def _send_request(self, path, data, method, timeout):
+    def _send_request(self, path, data, method, timeout=CONN_TIMEOUT):
         """
         Uses the HTTP transport to query the Route53 API. Runs the response
         through lxml's parser, before we hand it off for further picking

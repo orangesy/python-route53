@@ -87,7 +87,7 @@ class BaseTransport(object):
             'Host': 'route53.amazonaws.com',
         }
 
-    def send_request(self, path, data, method):
+    def send_request(self, path, data, method, timeout):
         """
         All outbound requests go through this method. It defers to the
         transport's various HTTP method-specific methods.
@@ -105,15 +105,15 @@ class BaseTransport(object):
         headers = self.get_request_headers()
 
         if method == 'GET':
-            return self._send_get_request(path, data, headers)
+            return self._send_get_request(path, data, headers, timeout)
         elif method == 'POST':
-            return self._send_post_request(path, data, headers)
+            return self._send_post_request(path, data, headers, timeout)
         elif method == 'DELETE':
-            return self._send_delete_request(path, headers)
+            return self._send_delete_request(path, headers, timeout)
         else:
             raise Route53Error("Invalid request method: %s" % method)
 
-    def _send_get_request(self, path, params, headers):
+    def _send_get_request(self, path, params, headers, timeout):
         """
         Transport sub-classes need to override this.
 
@@ -129,7 +129,7 @@ class BaseTransport(object):
 
         raise NotImplementedError
 
-    def _send_post_request(self, path, data, headers):
+    def _send_post_request(self, path, data, headers, timeout):
         """
         Transport sub-classes need to override this.
 
@@ -146,7 +146,7 @@ class BaseTransport(object):
 
         raise NotImplementedError
 
-    def _send_delete_request(self, path, headers):
+    def _send_delete_request(self, path, headers, timeout):
         """
         Transport sub-classes need to override this.
 
